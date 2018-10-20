@@ -1,3 +1,4 @@
+
 var x = 0
 var y = 0
 var counter = 0
@@ -11,6 +12,8 @@ var golf_height = 80
 var golf_club
 var prev_mouse_x = 0
 var prev_mouse_y = 0
+var pseudo_x
+var pseudo_y
 function setup() {
     var canvas = createCanvas(window.innerWidth, window.innerHeight);
     console.log(canvas)
@@ -47,6 +50,7 @@ function setup() {
     }
 }
 function draw() {
+    socket.emit('send_game_data', {x:mouseX, y:mouseY});
     counter++
     if (counter > 90) {
         //    changeDirection()
@@ -54,6 +58,7 @@ function draw() {
     }
     background('white')
     rect(mouseX, mouseY, golf_club.width, golf_club.height)
+    rect(pseudo_x, pseudo_y, golf_club.width, golf_club.height)
 
     for (var i = 0; i < ball_array.length; i++) {
 
@@ -273,6 +278,7 @@ function applyBatCollision(ball) {
 
     
 }
+
 
 
 /*window.onload = function() {

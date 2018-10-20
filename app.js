@@ -14,8 +14,6 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
-//app.use('/client', express.static(__dirname + '/client'));
-//app.use('/public', express.static(path.join(__dirname, 'public')))
 
 server.listen(process.env.PORT || port);
 console.log("Server started")
@@ -30,4 +28,9 @@ app.post('/submit_form', function(req, res){
 }) 
 io.on('connection' , function(socket){
     console.log('a user connected');
+    socket.on('send_game_data', function(data){ 
+        socket.broadcast.emit('send_position', data)
+        console.log(data)
+    });
+    
   });
