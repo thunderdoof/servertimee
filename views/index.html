@@ -18,8 +18,8 @@
         var socket = io();
         socket.on('send_position', function(data){
             pseudo_x = data.x
-            pseudo_y = data.y
-    console.log('received ' + data.x + " " + data.y)
+            
+    console.log('received ' + data.x )
 })
     </script>    
 </body>

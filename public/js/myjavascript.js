@@ -7,21 +7,24 @@ var available_space_y = []
 var amount_of_balls = 3
 var w = 50
 var h = 50
-var golf_width = 80
-var golf_height = 5
+var bat_width = 80
+var bat_height = 5
 var pong_bat
 var prev_mouse_x = 0
 var prev_mouse_y = 0
-var pseudo_x
-var pseudo_y
+var pseudo_x = window.innerWidth / 2
+
 
 function setup() {
     var canvas = createCanvas(window.innerWidth, window.innerHeight);
     console.log(canvas)
-    pong_bat = new GolfClub(golf_width, golf_height, window.innerHeight - 20)
+    pong_bat = new PongBat(bat_width, bat_height, window.innerHeight - 20)
 
     ball_array = []
-    
+
+    pseudo_pong_bat = new PongBat(bat_width, bat_height, 100)
+
+    bat_array = [pong_bat, pseudo_pong_bat]
 
     var index_x = 0
     var index_y = 0
@@ -30,7 +33,7 @@ function setup() {
 
         var x
         var y
-       
+
 
         x = Math.floor(Math.random() * (window.innerWidth - w + 2 * w) - 2 * w);
         y = Math.floor(Math.random() * (window.innerHeight - h + 2 * h) - 2 * h);
@@ -42,24 +45,27 @@ function setup() {
     }
 }
 function draw() {
-    socket.emit('send_game_data', {x:mouseX, y:pong_bat.y});
+    socket.emit('send_game_data', { x: mouseX });
     counter++
     if (counter > 90) {
         //    changeDirection()
         counter = 0
     }
     background('white')
+
     rect(mouseX, pong_bat.y, pong_bat.width, pong_bat.height)
-    //rect(pseudo_x, pseudo_y, pong_bat.width, pong_bat.height)
+
+    rect(pseudo_x, pseudo_pong_bat.y, pseudo_pong_bat.width, pseudo_pong_bat.height)
+    console.log(pseudo_x)
 
     for (var i = 0; i < ball_array.length; i++) {
 
         wallBounce(ball_array[i])
-        if (ballClubCollision(ball_array[i])) {
-            
-            applyBatCollision(ball_array[i])
-
+        for (var j = 0; j < bat_array.length; j++) {
+            applyBat(ball_array[i], bat_array[j])
         }
+
+
 
         var result_ball = hasCollidedBall(ball_array[i])
 
@@ -85,8 +91,8 @@ function draw() {
 function BouncingBall(x, y, width, height) {
     this.x = x
     this.y = y  //set fields for this object
-    this.vx = 4
-    this.vy = 4;
+    this.vx = 7
+    this.vy = 7;
     this.colour = getColour()
     this.width = width
     this.height = height
@@ -110,7 +116,7 @@ function generateSpaceArray(w, h) {
 }
 
 
-function addGravity(ball){
+function addGravity(ball) {
     const gravity_constant = 0.1
     ball.vy += gravity_constant
 }
@@ -201,16 +207,16 @@ function mouseMoved(event) {
     console.log('move the mouse')
 }
 
-function GolfClub(width, height, y) {
+function PongBat(width, height, y) {
     this.y = y
     this.width = width
     this.height = height
 }
 
-function ballClubCollision(ball) {
-    if (ball.y + ball.height / 2 >= pong_bat.y && ball.y - ball.height / 2 <= pong_bat.y + pong_bat.height) {
+function ballClubCollision(ball, bat) {
+    if (ball.y + ball.height / 2 >= bat.y && ball.y - ball.height / 2 <= bat.y + bat.height) {
 
-        if (ball.x + ball.width / 2 >= mouseX && ball.x - ball.width / 2 <= mouseX + pong_bat.width) {
+        if (ball.x + ball.width / 2 >= mouseX && ball.x - ball.width / 2 <= mouseX + bat.width) {
 
             return true
         }
@@ -223,30 +229,36 @@ function getBoxVelocityX() {
 
 
 }
-function applyBatCollision(ball) {
+function applyBatCollision(ball, bat) {
     var prev_ball_x = ball.x - ball.vx
     var prev_ball_y = ball.y - ball.vy
 
     if (prev_ball_x + ball.width / 2 > prev_mouse_x && prev_ball_x - ball.width / 2 < prev_mouse_x + pong_bat.width) { //collided on the top
         console.log('top or bottom')
-        
-        if (ball.y > pong_bat.y) {        //ball is below box
+
+        if (ball.y > bat.y) {        //ball is below box
             console.log('hits from bottom')
             if (ball.vy < 0) {        //ball moving towards box
                 ball.vy = -ball.vy
             } else {
-                ball.y = pong_bat.y + pong_bat.height + ball.height / 2
+                ball.y = bat.y + bat.height + ball.height / 2
             }
         } else {                      //ball above box
             console.log('hits from top')
             if (ball.vy > 0) {        //ball moving towards box
-                ball.vy = -ball.vy 
+                ball.vy = -ball.vy
             } else {
-                ball.y = pong_bat.y - ball.height / 2
+                ball.y = bat.y - ball.height / 2
             }
         }
     }
-    else if (prev_ball_y + ball.height / 2 > prev_mouse_y && prev_ball_y - ball.height / 2 < prev_mouse_y + pong_bat.height) { //collided the side
+}
+function applyBat(ball, bat) {
+    if (ballClubCollision(ball, bat)) {
+        applyBatCollision(ball, bat)
+    }
+}
+    /*else if (prev_ball_y + ball.height / 2 > prev_mouse_y && prev_ball_y - ball.height / 2 < prev_mouse_y + pong_bat.height) { //collided the side
         (console.log('side'))
         console.log(prev_ball_y + ball.height / 2 - prev_mouse_y)
         console.log(prev_ball_y - ball.height / 2 - (prev_mouse_y + pong_bat.height))
@@ -266,10 +278,10 @@ function applyBatCollision(ball) {
                 ball.x = mouseX + pong_bat.width + ball.width / 2    // set to right side of box
             }
         }
-    }
+    } */
 
     
-}
+
 
 
 
