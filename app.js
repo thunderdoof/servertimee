@@ -3,8 +3,9 @@ const app = express()
 const expressValidator = require('express-validator');
 const path = require('path')
 const bodyParser = require('body-parser');
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+
+var server = require('http').Server(app);
+var io = require('socket.io').listen(server);
 const port = 3000
 app.use(expressValidator())
 app.use(bodyParser.json() );       // to support JSON-encoded bodies
@@ -16,7 +17,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 //app.use('/client', express.static(__dirname + '/client'));
 //app.use('/public', express.static(path.join(__dirname, 'public')))
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+server.listen(process.env.PORT || port);
+console.log("Server started")
 app.get('/game', function(req, res){
     res.sendFile(path.join(__dirname + '/views/index.html'))
 })
