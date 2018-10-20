@@ -12,7 +12,7 @@ app.use(bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
-app.set('views', path.join(__dirname, 'views'));
+
 app.use(express.static(path.join(__dirname, 'public')));
 //app.use('/client', express.static(__dirname + '/client'));
 //app.use('/public', express.static(path.join(__dirname, 'public')))
