@@ -14,7 +14,6 @@ var prev_mouse_y = 0
 function setup() {
     var canvas = createCanvas(window.innerWidth, window.innerHeight);
     console.log(canvas)
-    stop listening to that you freak
     golf_club = new GolfClub(golf_width, golf_height)
 
     ball_array = []
