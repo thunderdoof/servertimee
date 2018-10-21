@@ -5,26 +5,30 @@
 
 <head>
     <!-- browser reads this stuff first, so here we import js files, put the title etc.-->
- <script src="/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="/js/myjavascript.js"></script>
     <script type="text/javascript" src="/js/Libraries/p5.js"></script>
     <!-- script type tells what type of text is in the subfile, src is source: name of the source file-->
-    
+
     <title>Title of the document</title>
 </head>
 
 <body>
     <script>
         var socket = io();
-        socket.on('send_position', function(data){
+        socket.on('send_position', function (data) {
             pseudo_x = data.x
-            
-    console.log('received ' + data.x )
-})
-    </script>    
+            //console.log('received ' + data.x)
+        })
+        socket.on('send_ball_positions', function(data){
+            server_ball_array = data.ball_array
+            console.log('received ' + server_ball_array[0].y )
+        })
+
+    
+    </script>
 </body>
 
 
 
 </html> <!-- close html tag-->
-

@@ -13,37 +13,16 @@ var pong_bat
 var prev_mouse_x = 0
 var prev_mouse_y = 0
 var pseudo_x = window.innerWidth / 2
-
+var server_ball_array = []
 
 function setup() {
     var canvas = createCanvas(window.innerWidth, window.innerHeight);
     console.log(canvas)
     pong_bat = new PongBat(bat_width, bat_height, window.innerHeight - 20)
-
-    ball_array = []
-
     pseudo_pong_bat = new PongBat(bat_width, bat_height, 100)
-
     bat_array = [pong_bat, pseudo_pong_bat]
-
-    var index_x = 0
-    var index_y = 0
-
-    for (var i = 0; i < amount_of_balls; i++) {
-
-        var x
-        var y
-
-
-        x = Math.floor(Math.random() * (window.innerWidth - w + 2 * w) - 2 * w);
-        y = Math.floor(Math.random() * (window.innerHeight - h + 2 * h) - 2 * h);
-
-        ball_array.push(new BouncingBall(x, y, w, h))
-
-
-
-    }
 }
+
 function draw() {
     socket.emit('send_game_data', { x: mouseX });
     counter++
@@ -52,54 +31,34 @@ function draw() {
         counter = 0
     }
     background('white')
-
     rect(mouseX, pong_bat.y, pong_bat.width, pong_bat.height)
-
     rect(pseudo_x, pseudo_pong_bat.y, pseudo_pong_bat.width, pseudo_pong_bat.height)
     console.log(pseudo_x)
 
-    for (var i = 0; i < ball_array.length; i++) {
-
-        wallBounce(ball_array[i])
+    for (var i = 0; i < server_ball_array.length; i++) {
+        //
+        
         for (var j = 0; j < bat_array.length; j++) {
-            applyBat(ball_array[i], bat_array[j])
+            //applyBat(server_ball_array[i], bat_array[j])
         }
-
-
-
-        var result_ball = hasCollidedBall(ball_array[i])
-
+        var result_ball = hasCollidedBall(server_ball_array[i])
         if (result_ball != null) {
-            collisionModel(result_ball, ball_array[i])
+           // collisionModel(result_ball, server_ball_array[i])
         }
 
+        fill(server_ball_array[i].colour)
+        ellipse(server_ball_array[i].x, server_ball_array[i].y, server_ball_array[i].width, server_ball_array[i].height)
+        //server_ball_array[i].x = server_ball_array[i].x + server_ball_array[i].vx
+        //server_ball_array[i].y = server_ball_array[i].y + server_ball_array[i].vy
 
-
-        fill(ball_array[i].colour)
-        ellipse(ball_array[i].x, ball_array[i].y, ball_array[i].width, ball_array[i].height)
-        ball_array[i].x = ball_array[i].x + ball_array[i].vx
-        ball_array[i].y = ball_array[i].y + ball_array[i].vy
-
-        //applyFriction(ball_array[i])
-        addGravity(ball_array[i])
+        //applyFriction(server_ball_array[i])
+        //addGravity(server_ball_array[i])
 
     }
     prev_mouse_x = mouseX
     prev_mouse_y = pong_bat.y
 }
 
-function BouncingBall(x, y, width, height) {
-    this.x = x
-    this.y = y  //set fields for this object
-    this.vx = 7
-    this.vy = 7;
-    this.colour = getColour()
-    this.width = width
-    this.height = height
-
-    //this.vx = Math.floor(Math.random() * (40 + 1) - 1);
-    //this.vy = Math.floor(Math.random() * (40 + 1) - 1);
-}
 
 function generateSpaceArray(w, h) {
 
@@ -116,64 +75,36 @@ function generateSpaceArray(w, h) {
 }
 
 
-function addGravity(ball) {
-    const gravity_constant = 0.1
-    ball.vy += gravity_constant
-}
 
 
 
-function getColour() {
-    var colours = ['red', 'blue', 'yellow', 'green', 'orange']
-    var random = Math.floor(Math.random() * (colours.length));
-    return colours[random]
-}
+
+
 
 function changeDirection() {
-    for (i = 0; i < ball_array.length; i++) {
-        ball_array[i].vx += Math.floor(Math.random() * (6))
-        ball_array[i].vy += Math.floor(Math.random() * (6))
+    for (i = 0; i < server_ball_array.length; i++) {
+        server_ball_array[i].vx += Math.floor(Math.random() * (6))
+        server_ball_array[i].vy += Math.floor(Math.random() * (6))
 
     }
 }
 
-function wallBounce(ball) {
-    if (hasCollidedxWall(ball)) {
-        ball.vx = -ball.vx
-    }
 
-    if (hasCollidedyWall(ball)) {
-        ball.vy = -ball.vy
-    }
-}
-
-function hasCollidedxWall(ball) {
-
-    if (ball.x - ball.width / 2 <= 0 || ball.x + ball.width / 2 >= window.innerWidth) {
-        return true
-    }
-}
-
-function hasCollidedyWall(ball) {
-    if (ball.y - ball.height / 2 <= 0 || ball.y + ball.height / 2 >= window.innerHeight) {
-        return true
-    }
-}
 
 function hasCollidedBall(ball) {
     reference_ball_centre_x = ball.x + ball.width
     reference_ball_centre_y = ball.y + ball.height
-    for (i = 0; i < ball_array.length; i++) {
-        if (ball != ball_array[i]) {
-            ball_centre_x = ball_array[i].x + ball_array[i].width
-            ball_centre_y = ball_array[i].y + ball_array[i].height
+    for (i = 0; i < server_ball_array.length; i++) {
+        if (ball != server_ball_array[i]) {
+            ball_centre_x = server_ball_array[i].x + server_ball_array[i].width
+            ball_centre_y = server_ball_array[i].y + server_ball_array[i].height
             var xdistance = reference_ball_centre_x - ball_centre_x
             var ydistance = reference_ball_centre_y - ball_centre_y
             var distance = Math.sqrt(Math.pow(xdistance, 2) + Math.pow(ydistance, 2))
 
             if (distance <= ball.width) {
 
-                return ball_array[i]
+                return server_ball_array[i]
             }
         }
     }
@@ -198,7 +129,6 @@ function applyFriction(ball) {
     const friction_constant = 0.991
     ball.vx = friction_constant * ball.vx
     ball.vy = friction_constant * ball.vy
-
 
 }
 
