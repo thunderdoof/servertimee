@@ -16,15 +16,15 @@
 <body>
     <script>
         var socket = io();
-        socket.on('send_position', function (data) {
-            pseudo_x = data.x
-            //console.log('received ' + data.x)
-        })
+
         socket.on('send_ball_positions', function(data){
             server_ball_array = data.ball_array
-            console.log('received ' + server_ball_array[0].y )
+            //console.log('received ' + server_ball_array[0].y )
         })
-
+        socket.on('send_bats', function(data){
+            server_bat_array = data.bat_array
+            
+        })
     
     </script>
 </body>
