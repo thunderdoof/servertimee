@@ -37,7 +37,7 @@ var bat_array = []
 var bat_w = 80
 var bat_h = 5
 var bat_y = game_screen_height - 50
-
+var users_connected = 0
 
 for (var i = 0; i < amount_of_balls; i++) {
 
@@ -49,11 +49,20 @@ for (var i = 0; i < amount_of_balls; i++) {
 
 }
 
+bat_array.push(new PongBat(bat_w, bat_h, 50, null))
+bat_array.push(new PongBat(bat_w, bat_h, bat_y, null))
+
 io.on('connection', function (socket) {
     console.log('a user connected');
+    users_connected ++
+    if(users_connected % 2 == 0){
+        bat_array[0].socket_id = socket.id
+    } else {
+        bat_array[1].socket_id = socket.id
+    }
     socket.on('send_game_data', function (data) {
         socket.broadcast.emit('send_position', data)
-        //console.log(data)
+        //console.log(data)    
     });
     socket.on('send_bat_position', function (data) {
         //console.log('im fucking sick of gabriel talking to me')
@@ -64,20 +73,13 @@ io.on('connection', function (socket) {
             }
         }
     })
-    if (bat_array.length == 0) {
-        bat_array.push(new PongBat(bat_w, bat_h, bat_y, socket.id))
-        console.log('addded first bat ' + bat_array[0].socket_id)
-    }
-    else if (bat_array.length == 1) {
-        bat_array.push(new PongBat(bat_w, bat_h, 100, socket.id))
-        console.log('addded second bat ' + bat_array[1].socket_id)
-    }
+    
 
     console.log(socket.id)
 
 
     setInterval(function () {
-        
+
         for (var i = 0; i < amount_of_balls; i++) {
             wallBounce(ball_array[i])
             //applyGravity(ball_array[i])
@@ -88,15 +90,15 @@ io.on('connection', function (socket) {
             }
             ball_array[i].x = ball_array[i].x + ball_array[i].vx
             ball_array[i].y = ball_array[i].y + ball_array[i].vy
-            for (var j = 0; j < bat_array.length ; j++) {
+            for (var j = 0; j < bat_array.length; j++) {
+
+                applyBat(ball_array[i], bat_array[j])
                 bat_array[j].prev_x = bat_array[j].x
-                applyBat(ball_array[i], bat_array[j]) 
-                
-                
+
             }
 
         }
-        
+
         socket.broadcast.emit('send_ball_positions', { ball_array: ball_array })
         socket.broadcast.emit('send_bats', { bat_array: bat_array })
     }, 16)
