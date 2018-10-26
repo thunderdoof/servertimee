@@ -28,34 +28,36 @@ app.post('/submit_form', function (req, res) {
 })
 
 var ball_array = []
-var amount_of_balls = 7
+var amount_of_balls = 3
 var w = 30
 var h = 30
+var ball_speed_x = 4
+var ball_speed_y = 4
 var game_screen_width = 1024
 var game_screen_height = 768
 var bat_array = []
 var bat_w = 80
 var bat_h = 5
-var bat_y = game_screen_height - 50
+var bat_y = game_screen_height - 10
 var users_connected = 0
-
+var counter = 0
 for (var i = 0; i < amount_of_balls; i++) {
 
-    var x = Math.floor(Math.random() * (game_screen_width - w + 2 * w) - 2 * w);
-    var y = Math.floor(Math.random() * (game_screen_height - h + 2 * h) - 2 * h);
+    var x = Math.floor(Math.random() * (game_screen_width - 4 * w + 4 * w) - 4 * w);
+    var y = Math.floor(Math.random() * (game_screen_height - 4 * h + 4 * h) - 4 * h);
 
-    ball_array.push(new BouncingBall(x, y, w, h))
+    ball_array.push(new BouncingBall(x, y, w, h, ball_speed_x, ball_speed_y))
     console.log(ball_array[i])
 
 }
 
 bat_array.push(new PongBat(bat_w, bat_h, 50, null))
 bat_array.push(new PongBat(bat_w, bat_h, bat_y, null))
-
+console.log('server initiated')
 io.on('connection', function (socket) {
     console.log('a user connected');
-    users_connected ++
-    if(users_connected % 2 == 0){
+    users_connected++
+    if (users_connected % 2 == 0) {
         bat_array[0].socket_id = socket.id
     } else {
         bat_array[1].socket_id = socket.id
@@ -73,43 +75,64 @@ io.on('connection', function (socket) {
             }
         }
     })
-    
 
     console.log(socket.id)
 
 
-    setInterval(function () {
+}) //applies gravity every second
 
-        for (var i = 0; i < amount_of_balls; i++) {
-            wallBounce(ball_array[i])
-            //applyGravity(ball_array[i])
+setInterval(function () {
 
-            var result_ball = hasCollidedBall(ball_array[i])
-            if (result_ball != null) {
-                collisionModel(result_ball, ball_array[i])
-            }
-            ball_array[i].x = ball_array[i].x + ball_array[i].vx
-            ball_array[i].y = ball_array[i].y + ball_array[i].vy
-            for (var j = 0; j < bat_array.length; j++) {
+    counter++
+    for (var i = 0; i < ball_array.length; i++) {
+        wallBounce(ball_array[i])
+        //applyGravity(ball_array[i])
+        if (hasCollidedyWall(ball_array[i])) {
+            return ball_array.splice(i, 1)
+        }
 
-                applyBat(ball_array[i], bat_array[j])
-                bat_array[j].prev_x = bat_array[j].x
-
-            }
+        var result_ball = hasCollidedBall(ball_array[i])
+        if (result_ball != null) {
+            collisionModel(result_ball, ball_array[i])
+        }
+        ball_array[i].x = ball_array[i].x + ball_array[i].vx
+        ball_array[i].y = ball_array[i].y + ball_array[i].vy
+        for (var j = 0; j < bat_array.length; j++) {
+            applyBat(ball_array[i], bat_array[j])
+            bat_array[j].prev_x = bat_array[j].x
 
         }
 
-        socket.broadcast.emit('send_ball_positions', { ball_array: ball_array })
-        socket.broadcast.emit('send_bats', { bat_array: bat_array })
-    }, 16)
-}) //applies gravity every second
+
+    }
+    if (counter % 256 == 0) {
+        x = Math.floor(Math.random() * ((game_screen_width - 4 * w + 4 * w) - 4 * w));
+        y = Math.floor(Math.random() * ((game_screen_height - 4 * h + 4 * h) - 4 * h));
+        ball_speed_x = Math.floor(Math.random() * (5 + 1) - 1);
+        ball_spped_y = Math.floor(Math.random() * (5 + 1) - 1);
+        ball_array.push(new BouncingBall(x, y, w, h, ball_speed_x, ball_speed_y))
+        for (var i = 0; i < ball_array.length; i++) {
+            if (ball_speed_x > 0) {
+                ball_array[i].vx = ball_array[i].vx + 2
+            } else {
+                ball_array[i].vx = ball_array[i].vx - 2
+            }
+            ball_array[i].vy = ball_array[i].vy + 2
+        }
+        console.log(ball_array.length)
+    }
 
 
-function BouncingBall(x, y, width, height) {
+    io.sockets.emit('send_ball_positions', { ball_array: ball_array })
+    io.sockets.emit('send_bats', { bat_array: bat_array })
+
+}, 16)
+
+function BouncingBall(x, y, width, height, vx, vy) {
     this.x = x
     this.y = y  //set fields for this object
-    this.vx = 4
-    this.vy = 4;
+    this.vx = vx
+    this.vy = vy
     this.colour = getColour()
     this.width = width
     this.height = height
@@ -150,7 +173,6 @@ function hasCollidedBall(ball) {
             var distance = Math.sqrt(Math.pow(xdistance, 2) + Math.pow(ydistance, 2))
 
             if (distance <= ball.width) {
-
                 return ball_array[i]
             }
         }
@@ -177,9 +199,6 @@ function wallBounce(ball) {
         ball.vx = -ball.vx
     }
 
-    if (hasCollidedyWall(ball)) {
-        ball.vy = -ball.vy
-    }
 }
 
 function hasCollidedxWall(ball) {
@@ -190,7 +209,7 @@ function hasCollidedxWall(ball) {
 }
 
 function hasCollidedyWall(ball) {
-    if (ball.y - ball.height / 2 <= 0 || ball.y + ball.height / 2 >= game_screen_height) {
+    if (ball.y + ball.height / 2 <= 50 || ball.y - ball.height / 2 >= bat_y) {
         return true
     }
 }
@@ -199,13 +218,15 @@ function hasCollidedyWall(ball) {
 function ballClubCollision(ball, bat) {
     if (ball.y + ball.height / 2 >= bat.y && ball.y - ball.height / 2 <= bat.y + bat.height) {
 
-        if (ball.x + ball.width / 2 >= bat.x && ball.x - ball.width / 2 <= bat.y + bat.width) {
+        if (ball.x + ball.width / 2 >= bat.x && ball.x - ball.width / 2 <= bat.x + bat.width) {
 
             return true
         }
 
     }
 }
+
+//function applyBatCollision(ball, bat) {
 
 function applyBatCollision(ball, bat) {
     var prev_ball_x = ball.x - ball.vx
@@ -230,8 +251,13 @@ function applyBatCollision(ball, bat) {
         }
     }
 }
+
+
 function applyBat(ball, bat) {
     if (ballClubCollision(ball, bat)) {
         applyBatCollision(ball, bat)
+        console.log('have collided')
     }
+
 }
+

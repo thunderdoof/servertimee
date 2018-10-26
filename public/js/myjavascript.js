@@ -53,6 +53,7 @@ function draw() {
     }
 
     for (var i = 0; i < server_bat_array.length; i++) {
+        //fill(server_bat_array[i].colour)
         rect(server_bat_array[i].x, server_bat_array[i].y, server_bat_array[i].width, server_bat_array[i].height)
         
     }
